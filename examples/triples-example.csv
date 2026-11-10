@@ -1,7 +1,7 @@
-﻿triple_id,subject,predicate,object,condition,polarity,source_qa_id,source_file,source_location
-T-001-001,个人用户,开立,实名钱包,,positive,QA-001-001,数字人民币计息新规公告.pdf,第2条
-T-001-002,数字人民币,分为,实名钱包,,positive,QA-001-002,数字人民币计息新规公告.pdf,第1条
-T-001-003,数字人民币,分为,硬钱包,,positive,QA-001-002,数字人民币计息新规公告.pdf,第1条
-T-001-004,实名钱包,计付利息,利息,自2026-01-01,positive,QA-001-001,数字人民币计息新规公告.pdf,第2条
-T-001-005,硬钱包,计付利息,利息,,negative,QA-001-003,数字人民币计息新规公告.pdf,第3条
-T-001-006,硬钱包,受理于,公交地铁,深圳公交试点,positive,QA-001-004,数字人民币试点场景通报.pdf,场景二
+﻿triple_id,subject,predicate,object,condition,polarity,source_qa_id,source_file,source_location,subject_category,object_category
+T-001-001,个人用户,开立,实名钱包,,positive,QA-001-001,数字人民币计息新规公告.pdf,第2条,,产品
+T-001-002,数字人民币,分为,实名钱包,,positive,QA-001-002,数字人民币计息新规公告.pdf,第1条,产品,
+T-001-003,数字人民币,分为,硬钱包,,positive,QA-001-002,数字人民币计息新规公告.pdf,第1条,产品,
+T-001-004,实名钱包,计付利息,利息,自2026-01-01,positive,QA-001-001,数字人民币计息新规公告.pdf,第2条,,
+T-001-005,硬钱包,计付利息,利息,,negative,QA-001-003,数字人民币计息新规公告.pdf,第3条,,
+T-001-006,硬钱包,受理于,公交地铁,深圳公交试点,positive,QA-001-004,数字人民币试点场景通报.pdf,场景二,,

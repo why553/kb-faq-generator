@@ -70,7 +70,7 @@ agent_created: true
 可选增强件（用户要求三元组/图谱时交付）：
 
 4. `triples.csv` —— 知识三元组，按 `references/triples-schema.md` 字段规范，每条挂靠问答对
-5. `graph.html` —— 交互式知识图谱（内置节点搜索、两节点最短路径查询、邻居子图展开、关系过滤、冲突候选一键高亮），由 `scripts/build_graph.py` 从 triples.csv + `assets/graph-template.html` 模板自动生成；生成后**必须用系统浏览器打开**（Windows 执行 `cmd /c start <graph.html 绝对路径>` 或 PowerShell `Start-Process`），不要在工作台内置预览中打开——独立浏览器才能完整加载 CDN 资源与交互功能
+5. `graph.html` —— 交互式知识图谱（内置节点搜索、两节点最短路径查询、邻居子图展开、关系过滤、冲突候选一键高亮），由 `scripts/build_graph.py` 从 triples.csv + `assets/graph-template.html` 模板自动生成；节点按分类标准着色（主体/产品/场景/制度/概念/其他，规则见 `references/triples-schema.md`，CSV 显式列可覆盖自动归类）；生成后**必须用系统浏览器打开**（Windows 执行 `cmd /c start <graph.html 绝对路径>` 或 PowerShell `Start-Process`），不要在工作台内置预览中打开——独立浏览器才能完整加载 CDN 资源与交互功能
 
 交付时明确提醒用户：
 

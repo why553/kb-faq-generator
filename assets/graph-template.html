@@ -63,7 +63,7 @@ var links = [
   { source: "n5", target: "n6", relation: "受理于", condition: "深圳公交试点" }
 ];
 /* ================= 以下为引擎逻辑，一般无需修改 ================= */
-var COLORS = { "概念": "#5470c6", "产品": "#91cc75", "主体": "#fac858", "场景": "#ee6666", "其他": "#73c0de" };
+var COLORS = { "概念": "#5470c6", "产品": "#91cc75", "主体": "#fac858", "场景": "#ee6666", "制度": "#9a60b4", "其他": "#73c0de" };
 function cat(n) { return COLORS[n.category] ? n.category : "其他"; }
 
 /* 邻接表 + BFS 最短路径（无向遍历） */

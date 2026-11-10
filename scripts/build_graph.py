@@ -14,6 +14,8 @@ build_graph.py —— 将 triples.csv 转换为交互式知识图谱 graph.html
     predicate             -> 边标签
     condition             -> 边上的限定条件标签
     polarity = negative   -> 边标红虚线（needsReview，冲突候选）
+    节点类别               -> CSV 显式列 subject_category / object_category 优先；
+                              未填则按 CATEGORY_RULES 关键词自动归类（主体/产品/场景/制度/概念/其他）
 """
 import argparse
 import csv
@@ -39,14 +41,39 @@ def load_triples(path: Path):
     return rows
 
 
+# ============ 分类标准（关键词自动归类） ============
+# 优先级从上到下，命中即停；CSV 显式列 subject_category/object_category 可覆盖
+CATEGORY_RULES = [
+    ("主体", ["用户", "客户", "个人", "企业", "公司", "银行", "机构", "部门",
+              "商户", "运营", "人行", "监管", "员工", "柜员", "经理"]),
+    ("产品", ["钱包", "卡", "账户", "存单", "理财", "基金", "保险", "贷款",
+              "产品", "应用", "APP", "小程序", "币"]),
+    ("场景", ["公交", "地铁", "缴费", "购物", "商超", "门店", "场景", "试点",
+              "食堂", "校园", "园区", "政务", "医疗"]),
+    ("制度", ["办法", "规定", "公告", "通知", "制度", "条例", "细则", "指引",
+              "协议", "合同", "文件"]),
+    ("概念", ["利息", "利率", "费率", "费用", "限额", "额度", "余额", "金额",
+              "汇率", "期限", "概念", "流程", "标准", "权益", "风险"]),
+]
+
+
+def classify(name: str) -> str:
+    for cat, keywords in CATEGORY_RULES:
+        if any(kw in name for kw in keywords):
+            return cat
+    return "其他"
+
+
 def build_data(triples):
-    """节点按首次出现顺序编号 n1..nX；negative 极性边标记待复核。"""
+    """节点按首次出现顺序编号 n1..nX；类别 = CSV 显式列 > 关键词规则 > 其他。"""
     node_ids, nodes = {}, []
     for t in triples:
-        for ent in (t["subject"], t["object"]):
+        for ent, ent_cat_key in ((t["subject"], "subject_category"), (t["object"], "object_category")):
             if ent and ent not in node_ids:
+                explicit = t.get(ent_cat_key, "")
+                cat = explicit if explicit else classify(ent)
                 node_ids[ent] = f"n{len(node_ids) + 1}"
-                nodes.append({"id": node_ids[ent], "name": ent, "category": "其他"})
+                nodes.append({"id": node_ids[ent], "name": ent, "category": cat})
     links = []
     for t in triples:
         links.append({

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>示例图谱</title>
+<title>知识图谱示例 - 数字人民币</title>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 <style>
   html,body{margin:0;height:100%;font-family:"Microsoft YaHei",sans-serif;overflow:hidden}
@@ -50,32 +50,32 @@ var nodes = [
   {
     "id": "n1",
     "name": "个人用户",
-    "category": "其他"
+    "category": "主体"
   },
   {
     "id": "n2",
     "name": "实名钱包",
-    "category": "其他"
+    "category": "产品"
   },
   {
     "id": "n3",
     "name": "数字人民币",
-    "category": "其他"
+    "category": "产品"
   },
   {
     "id": "n4",
     "name": "硬钱包",
-    "category": "其他"
+    "category": "产品"
   },
   {
     "id": "n5",
     "name": "利息",
-    "category": "其他"
+    "category": "概念"
   },
   {
     "id": "n6",
     "name": "公交地铁",
-    "category": "其他"
+    "category": "场景"
   }
 ];
 var links = [
@@ -123,7 +123,7 @@ var links = [
   }
 ];
 /* ================= 以下为引擎逻辑，一般无需修改 ================= */
-var COLORS = { "概念": "#5470c6", "产品": "#91cc75", "主体": "#fac858", "场景": "#ee6666", "其他": "#73c0de" };
+var COLORS = { "概念": "#5470c6", "产品": "#91cc75", "主体": "#fac858", "场景": "#ee6666", "制度": "#9a60b4", "其他": "#73c0de" };
 function cat(n) { return COLORS[n.category] ? n.category : "其他"; }
 
 /* 邻接表 + BFS 最短路径（无向遍历） */
