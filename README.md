@@ -2,8 +2,6 @@
 
 从制度文件、培训材料、业务手册等源文档批量生成结构化知识库问答对（FAQ）的 AI Agent Skill。适用于银行/企业知识工程中的"知识入库"工序。
 
-兼容 WorkBuddy / Claude Code / 其他支持 SKILL.md 规范的 Agent 平台。
-
 ## 为什么做这个
 
 企业知识工程里最耗人力的工序之一，是把成堆的制度文件、培训材料转化成可入库、可检索的问答对。手工整理又慢又容易漏；直接让大模型"随便生成"又缺乏一致性——每次口径不同、出处缺失、无法审计。
@@ -27,15 +25,7 @@
 
 ## 安装
 
-### WorkBuddy
-
-将本目录复制到 `~/.workbuddy/skills/kb-faq-generator`（用户级）或项目的 `.workbuddy/skills/kb-faq-generator`（项目级）。
-
-### Claude Code
-
-```bash
-git clone https://github.com/why553/kb-faq-generator.git ~/.claude/skills/kb-faq-generator
-```
+将本目录复制到 Agent 的技能目录下即可（WorkBuddy 用户级：`~/.workbuddy/skills/kb-faq-generator`；项目级：`.workbuddy/skills/kb-faq-generator`）。
 
 ## 使用
 
@@ -77,4 +67,4 @@ kb-faq-generator/
 
 ## License
 
-MIT
+版权所有。本项目为个人学习实习期间的作品，仅供学习交流使用，未经许可不得商用或二次分发。
