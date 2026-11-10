@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>示例图谱</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  html,body{margin:0;height:100%;font-family:"Microsoft YaHei",sans-serif;overflow:hidden}
+  #chart{width:100%;height:100%}
+  .bar{position:absolute;top:0;left:0;right:0;background:rgba(255,255,255,.94);
+       border-bottom:1px solid #e0e0e0;padding:8px 14px;display:flex;gap:8px;
+       align-items:center;flex-wrap:wrap;z-index:10}
+  .bar input,.bar select{font-size:12px;padding:4px 8px;border:1px solid #ccc;border-radius:6px;outline:none}
+  .bar input{width:150px}
+  .bar button{font-size:12px;padding:4px 12px;border:1px solid #bbb;border-radius:6px;
+              background:#fff;cursor:pointer;color:#333}
+  .bar button:hover{background:#f0f4ff}
+  .bar button.primary{background:#2f54eb;color:#fff;border-color:#2f54eb}
+  .stat{font-size:12px;color:#888;margin-left:auto}
+  .msg{position:absolute;bottom:14px;left:16px;font-size:12px;color:#666;z-index:10;
+       background:rgba(255,255,255,.9);padding:4px 10px;border-radius:6px;border:1px solid #eee}
+  .title{position:absolute;bottom:40px;left:16px;font-size:13px;color:#444;z-index:10;font-weight:500}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b style="font-size:13px">图谱探索器</b>
+  <input id="searchBox" placeholder="搜索节点名称…" oninput="doSearch(this.value)">
+  <select id="relFilter" onchange="applyRelationFilter(this.value)">
+    <option value="">全部关系</option>
+  </select>
+  <span style="font-size:12px;color:#888">最短路径：</span>
+  <select id="pathA"></select>
+  <span style="font-size:12px;color:#888">→</span>
+  <select id="pathB"></select>
+  <button class="primary" onclick="showShortestPath()">查询</button>
+  <button onclick="expandNeighborhood()">邻居展开</button>
+  <button onclick="showConflicts()">冲突候选</button>
+  <button onclick="resetView()">重置</button>
+  <span class="stat" id="stat"></span>
+</div>
+<div class="title">节点=实体（大小=连接数） · 箭头=关系 · 标签[ ]内=限定条件 · 红虚线=待复核</div>
+<div class="msg" id="msg">提示：点击节点查看邻居；选中两个节点后点"查询"看最短路径。</div>
+<div id="chart"></div>
+<script>
+/* ================= 由 Agent 注入数据 =================
+   nodes: [{ id, name, category }]
+   links: [{ source, target, relation, condition, needsReview }] */
+var nodes = [
+  {
+    "id": "n1",
+    "name": "个人用户",
+    "category": "其他"
+  },
+  {
+    "id": "n2",
+    "name": "实名钱包",
+    "category": "其他"
+  },
+  {
+    "id": "n3",
+    "name": "数字人民币",
+    "category": "其他"
+  },
+  {
+    "id": "n4",
+    "name": "硬钱包",
+    "category": "其他"
+  },
+  {
+    "id": "n5",
+    "name": "利息",
+    "category": "其他"
+  },
+  {
+    "id": "n6",
+    "name": "公交地铁",
+    "category": "其他"
+  }
+];
+var links = [
+  {
+    "source": "n1",
+    "target": "n2",
+    "relation": "开立",
+    "condition": "",
+    "needsReview": false
+  },
+  {
+    "source": "n3",
+    "target": "n2",
+    "relation": "分为",
+    "condition": "",
+    "needsReview": false
+  },
+  {
+    "source": "n3",
+    "target": "n4",
+    "relation": "分为",
+    "condition": "",
+    "needsReview": false
+  },
+  {
+    "source": "n2",
+    "target": "n5",
+    "relation": "计付利息",
+    "condition": "自2026-01-01",
+    "needsReview": false
+  },
+  {
+    "source": "n4",
+    "target": "n5",
+    "relation": "计付利息",
+    "condition": "",
+    "needsReview": true
+  },
+  {
+    "source": "n4",
+    "target": "n6",
+    "relation": "受理于",
+    "condition": "深圳公交试点",
+    "needsReview": false
+  }
+];
+/* ================= 以下为引擎逻辑，一般无需修改 ================= */
+var COLORS = { "概念": "#5470c6", "产品": "#91cc75", "主体": "#fac858", "场景": "#ee6666", "其他": "#73c0de" };
+function cat(n) { return COLORS[n.category] ? n.category : "其他"; }
+
+/* 邻接表 + BFS 最短路径（无向遍历） */
+function buildAdj() {
+  var adj = {};
+  nodes.forEach(function (n) { adj[n.id] = []; });
+  links.forEach(function (l, i) {
+    if (adj[l.source]) adj[l.source].push({ to: l.target, li: i });
+    if (adj[l.target]) adj[l.target].push({ to: l.source, li: i });
+  });
+  return adj;
+}
+function bfsPath(a, b) {
+  var adj = buildAdj(), prev = {}, visited = {};
+  visited[a] = true;
+  var q = [a];
+  while (q.length) {
+    var cur = q.shift();
+    if (cur === b) break;
+    adj[cur].forEach(function (e) {
+      if (!visited[e.to]) { visited[e.to] = true; prev[e.to] = { node: cur, li: e.li }; q.push(e.to); }
+    });
+  }
+  if (!visited[b]) return null;
+  var pathNodes = [b], pathLinks = [], cur = b;
+  while (cur !== a) { pathLinks.push(prev[cur].li); cur = prev[cur].node; pathNodes.push(cur); }
+  return { nodes: pathNodes, links: pathLinks };
+}
+
+var chart = echarts.init(document.getElementById("chart"));
+var dimNode = { itemStyle: { opacity: 0.12 }, label: { show: false } };
+var dimLink = { lineStyle: { opacity: 0.08 }, label: { show: false } };
+
+function baseOption() {
+  var deg = {};
+  links.forEach(function (l) { deg[l.source] = (deg[l.source] || 0) + 1; deg[l.target] = (deg[l.target] || 0) + 1; });
+  return {
+    tooltip: {
+      formatter: function (p) {
+        if (p.dataType === "edge") {
+          var s = "关系：" + p.data.relation;
+          if (p.data.condition) s += "\n条件：" + p.data.condition;
+          if (p.data.needsReview) s += "\n⚠ 待人工复核";
+          return s;
+        }
+        return p.data.name + "【" + p.data.category + "】";
+      }
+    },
+    legend: [{ data: Object.keys(COLORS), bottom: 10, left: 20 }],
+    series: [{
+      type: "graph", layout: "force", roam: true, draggable: true,
+      force: { repulsion: 300, edgeLength: 130 },
+      label: { show: true, fontSize: 13, color: "#333" },
+      edgeLabel: { show: true, fontSize: 11, color: "#666",
+        formatter: function (p) {
+          var s = p.data.relation;
+          if (p.data.condition) s += " [" + p.data.condition + "]";
+          return s;
+        } },
+      edgeSymbol: ["none", "arrow"], edgeSymbolSize: 9,
+      categories: Object.keys(COLORS).map(function (k) { return { name: k, itemStyle: { color: COLORS[k] } }; }),
+      data: nodes.map(function (n) {
+        return { id: n.id, name: n.name, category: cat(n), symbolSize: 30 + 8 * (deg[n.id] || 1),
+                 itemStyle: { borderColor: "#fff", borderWidth: 1.5 } };
+      }),
+      links: links.map(function (l) {
+        return { source: l.source, target: l.target, relation: l.relation, condition: l.condition,
+                 needsReview: !!l.needsReview,
+                 lineStyle: { color: l.needsReview ? "#c0392b" : "#999", width: 2.5,
+                              type: l.needsReview ? "dashed" : "solid" } };
+      })
+    }]
+  };
+}
+
+function setView(nodeIds, linkIdxs, note) {
+  var opt = baseOption();
+  if (nodeIds) {
+    opt.series[0].data.forEach(function (d) {
+      if (nodeIds.indexOf(d.id) < 0) Object.assign(d, dimNode);
+    });
+    opt.series[0].links.forEach(function (d, i) {
+      if (linkIdxs && linkIdxs.indexOf(i) < 0) Object.assign(d, dimLink);
+    });
+  }
+  chart.setOption(opt);
+  document.getElementById("msg").textContent = note || "";
+}
+
+function doSearch(text) {
+  text = (text || "").trim();
+  if (!text) return resetView();
+  var hit = nodes.filter(function (n) { return n.name.indexOf(text) >= 0; }).map(function (n) { return n.id; });
+  if (!hit.length) { setView(null, null, "未找到包含「" + text + "」的节点"); return; }
+  var adj = buildAdj(), keep = {};
+  hit.forEach(function (id) { keep[id] = true; (adj[id] || []).forEach(function (e) { keep[e.to] = true; }); });
+  setView(Object.keys(keep), null, "搜索「" + text + "」：高亮匹配节点及其邻居（" + Object.keys(keep).length + " 个节点）");
+}
+
+function applyRelationFilter(rel) {
+  if (!rel) return resetView();
+  var keep = {};
+  links.forEach(function (l, i) {
+    if (l.relation === rel) { keep[l.source] = true; keep[l.target] = true; }
+  });
+  setView(Object.keys(keep), null, "关系过滤【" + rel + "】：仅显示相关子图");
+}
+
+function showShortestPath() {
+  var a = document.getElementById("pathA").value, b = document.getElementById("pathB").value;
+  if (!a || !b || a === b) { document.getElementById("msg").textContent = "请选择两个不同节点"; return; }
+  var p = bfsPath(a, b);
+  if (!p) { setView(null, null, "两节点之间不可达（当前子图内无通路）"); return; }
+  var names = p.nodes.map(function (id) {
+    return nodes.filter(function (n) { return n.id === id; })[0].name;
+  });
+  setView(p.nodes, p.links, "最短路径（" + (p.links.length) + " 跳）：" + names.join(" → "));
+}
+
+function expandNeighborhood() {
+  /* 取图中心度最高的节点做邻居展开 */
+  var deg = {}, best = null, m = -1;
+  links.forEach(function (l) {
+    deg[l.source] = (deg[l.source] || 0) + 1; deg[l.target] = (deg[l.target] || 0) + 1;
+  });
+  nodes.forEach(function (n) { if ((deg[n.id] || 0) > m) { m = deg[n.id] || 0; best = n.id; } });
+  var adj = buildAdj(), keep = {};
+  keep[best] = true;
+  (adj[best] || []).forEach(function (e) { keep[e.to] = true; });
+  var bestName = nodes.filter(function (n) { return n.id === best; })[0].name;
+  setView(Object.keys(keep), null, "邻居展开：中心节点【" + bestName + "】及其 " + m + " 个邻居");
+}
+
+function showConflicts() {
+  var bad = [];
+  links.forEach(function (l, i) { if (l.needsReview) bad.push(i); });
+  var seen = {}, pairs = {};
+  links.forEach(function (l, i) {
+    var key = [l.source, l.target].sort().join("|");
+    (pairs[key] = pairs[key] || []).push(i);
+  });
+  Object.keys(pairs).forEach(function (k) {
+    if (pairs[k].length > 1) bad = bad.concat(pairs[k]);
+  });
+  if (!bad.length) { document.getElementById("msg").textContent = "未发现冲突候选"; return; }
+  var keep = {};
+  bad.forEach(function (i) { keep[links[i].source] = true; keep[links[i].target] = true; });
+  setView(Object.keys(keep), bad, "冲突候选：" + bad.length + " 条边（红虚线），建议人工复核");
+}
+
+function resetView() {
+  chart.setOption(baseOption(), true);
+  document.getElementById("msg").textContent = "已重置。提示：点击节点查看邻居；选中两个节点后点\"查询\"看最短路径。";
+}
+
+/* 初始化下拉框与统计 */
+var selA = document.getElementById("pathA"), selB = document.getElementById("pathB"),
+    relF = document.getElementById("relFilter");
+nodes.forEach(function (n) {
+  selA.add(new Option(n.name, n.id)); selB.add(new Option(n.name, n.id));
+});
+var rels = {};
+links.forEach(function (l) { rels[l.relation] = true; });
+Object.keys(rels).forEach(function (r) { relF.add(new Option(r, r)); });
+document.getElementById("stat").textContent =
+  nodes.length + " 实体 · " + links.length + " 关系 · " +
+  Object.keys(COLORS).filter(function (k) { return nodes.some(function (n) { return cat(n) === k; }); }).length + " 类别";
+
+chart.setOption(baseOption(), true);
+chart.on("click", function (p) {
+  if (p.dataType === "node") {
+    var adj = buildAdj(), keep = {};
+    keep[p.data.id] = true;
+    (adj[p.data.id] || []).forEach(function (e) { keep[e.to] = true; });
+    setView(Object.keys(keep), null, "节点【" + p.data.name + "】的邻居子图（再点\"重置\"还原）");
+  }
+});
+window.addEventListener("resize", function () { chart.resize(); });
+</script>
+</body>
+</html>

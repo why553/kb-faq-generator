@@ -38,3 +38,11 @@
 - needs_review=yes 条目清单及原因摘要
 - 未能转化为问答对的标题清单及原因（对应 style-guide.md 覆盖度要求）
 - 本批质量自检结果（以上 A-D 各项的通过情况）
+
+## E. 三元组检查（仅生成三元组时）
+
+- [ ] 每条三元组有 source_qa_id，且该 QA 存在于本批问答对中
+- [ ] condition 字段已承载原文全部时间/地域/适用范围限定语，无丢失
+- [ ] 否定语义使用 polarity=negative，未混入 predicate 文本
+- [ ] 同义实体清单已在生成报告中列出，交人工归一
+- [ ] graph.html 可正常在浏览器打开，节点边数与 triples.csv 一致

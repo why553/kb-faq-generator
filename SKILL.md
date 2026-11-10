@@ -3,10 +3,11 @@ name: kb-faq-generator
 description: |
   从制度文件、培训材料、业务手册等源文档批量生成结构化知识库问答对（FAQ），
   每条问答对强制携带原文出处与逐字引用，按统一字段规范输出 Markdown 表格和
-  CSV 入库文件，并随批输出质量自检报告。适用于银行/企业知识工程中的
-  "知识入库"工序。This skill should be used when the user provides documents
+  CSV 入库文件，并随批输出质量自检报告；可选生成知识三元组 CSV 与交互式
+  知识图谱 HTML。适用于银行/企业知识工程中的"知识入库"工序。
+  This skill should be used when the user provides documents
   (PDF/Word/txt/md) and asks to generate FAQs, 问答对, 知识库问答, FAQ 库,
-  培训问答, or asks to 把文件整理成问答/入库格式.
+  培训问答, 知识图谱, 三元组, or asks to 把文件整理成问答/入库格式.
 agent_created: true
 ---
 
@@ -14,7 +15,7 @@ agent_created: true
 
 ## Overview
 
-将制度文件、培训材料、业务手册等源文档批量转换为结构化知识库问答对。每条问答对强制溯源（逐字原文引用 + 精确出处定位），按固定 12 字段规范交付 Markdown 表格 + CSV 入库文件，并随批输出质量自检报告。
+将制度文件、培训材料、业务手册等源文档批量转换为结构化知识库问答对。每条问答对强制溯源（逐字原文引用 + 精确出处定位），按固定 12 字段规范交付 Markdown 表格 + CSV 入库文件，并随批输出质量自检报告。可选增强：抽取知识三元组（含限定条件字段）并渲染为可交互的知识图谱 HTML（双击即可在浏览器查看，无需安装任何软件）。
 
 核心立场：本技能只做"知识的搬运与格式化"，不生产新知识。答案中的一切事实均须来自源文件，这是金融场景不可逾越的底线。
 
@@ -26,6 +27,7 @@ agent_created: true
 2. **主题分类体系**（可选）：知识库已有的 category 分类；未提供时按源文件内容自拟 4-8 个分类并在报告中列出
 3. **audience 定位**（可选）：internal / customer / both；未提供时默认 internal
 4. **数量期望**（可选）：无要求时按覆盖度规则生成（见 style-guide.md），不设上限
+5. **三元组与图谱**（可选）：用户提及"三元组/知识图谱/可视化"时生成；未提及则不生成，保持交付物精简
 
 ## Workflow
 
@@ -53,17 +55,27 @@ agent_created: true
 - C 质量：问法合规、答案对题、无重复
 - D 安全：无个人信息、无内部信息泄露、无收益承诺表述
 
+生成了三元组时，追加 E 类检查（见 quality-checklist.md）：每条三元组有 source_qa_id、condition 无丢失、同义实体已列入清单。
+
 任何一项不通过，先修正再交付。
 
 ### Step 4: 交付
 
-输出三件套，缺一不可：
+核心三件套，缺一不可：
 
 1. `faq-{主题}-{日期}.md` —— Markdown 表格，供人工评审
 2. `faq-{主题}-{日期}.csv` —— CSV，供知识库批量导入
 3. **生成报告** —— 按 quality-checklist.md 的"交付报告"章节输出：源文件清单、分类分布、needs_review 条目及原因、未能转化条目的说明、自检结果
 
-交付时明确提醒用户：needs_review=yes 的条目必须经人工确认后方可入正式知识库。
+可选增强件（用户要求三元组/图谱时交付）：
+
+4. `triples.csv` —— 知识三元组，按 `references/triples-schema.md` 字段规范，每条挂靠问答对
+5. `graph.html` —— 交互式知识图谱（内置节点搜索、两节点最短路径查询、邻居子图展开、关系过滤、冲突候选一键高亮），由 `scripts/build_graph.py` 从 triples.csv + `assets/graph-template.html` 模板自动生成；生成后**必须用系统浏览器打开**（Windows 执行 `cmd /c start <graph.html 绝对路径>` 或 PowerShell `Start-Process`），不要在工作台内置预览中打开——独立浏览器才能完整加载 CDN 资源与交互功能
+
+交付时明确提醒用户：
+
+- needs_review=yes 的条目必须经人工确认后方可入正式知识库
+- triples.csv 是通用图数据格式（subject/object 为节点，predicate+condition 为边属性），可导入任何图数据库或图分析工具，用于冲突检测等机器查询
 
 ## 边界（不做的事）
 
