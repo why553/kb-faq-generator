@@ -34,7 +34,7 @@
 ### Claude Code
 
 ```bash
-git clone https://github.com/<YOUR_USERNAME>/kb-faq-generator.git ~/.claude/skills/kb-faq-generator
+git clone https://github.com/why553/kb-faq-generator.git ~/.claude/skills/kb-faq-generator
 ```
 
 ## 使用
