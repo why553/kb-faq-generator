@@ -40,9 +40,10 @@ agent_created: true
 
 ### 第 2 步 生成问答对
 
-- 字段规范：按 references/qa-schema.md 的 13 个字段定义、编号规则和禁止事项填写
+- 字段规范：按 references/qa-schema.md 的 15 个字段定义、编号规则和禁止事项填写
 - 问题写法：按 references/style-guide.md 把条文语言改成办事语言。数值、日期、利率、限额必须写清楚
 - 问型分布：每条问题先按 references/qa-schema.md 的问型矩阵定好 question_type 和 user_profile 再写。每批 10 条及以上时，问型至少覆盖 3 类，提问者画像至少覆盖 2 类。同一知识点的多条问答对必须用不同的问型或画像
+- 难度标定：每条问答对标 difficulty_retrieval 和 difficulty_reasoning，取值和规则见 references/qa-schema.md。每批 10 条及以上时，两个难度维度各至少覆盖 2 档。需要计算的答案要把计算过程写进 review_note，需要比较的答案标 needs_review
 - 答案依据：每条答案的事实必须能在 source_quote 的原文摘录里找到。需要推断的内容，confidence 只能填 medium 或 low，并且 needs_review 填 yes
 - 输出格式：CSV 参照 assets/faq-output-template.csv，编码用 UTF-8 with BOM
 
@@ -55,6 +56,7 @@ agent_created: true
 - C 质量：问题写法合规，答案回答问题，没有重复条目
 - D 安全：没有个人信息，没有内部信息，没有收益承诺
 - F 问型：question_type 和 user_profile 取值合规，分布达到矩阵要求，reasoning 类都标了 needs_review
+- G 难度：难度取值合规，分布达到要求，calculation 类的答案能由原文数值算出，calculation 和 comparison 类都标了 needs_review
 
 生成了三元组时追加 E 类检查：每条三元组都有 source_qa_id，condition 没有丢失，同义实体已列入清单。
 
@@ -66,7 +68,7 @@ agent_created: true
 
 1. faq-{主题}-{日期}.md，Markdown 表格，供人工评审
 2. faq-{主题}-{日期}.csv，供知识库批量导入
-3. 生成报告，内容包括源文件清单、分类分布、问型分布矩阵、needs_review 条目及原因、没有转化的内容及原因、自检结果
+3. 生成报告，内容包括源文件清单、分类分布、问型分布矩阵、难度分布统计、needs_review 条目及原因、没有转化的内容及原因、自检结果
 
 用户要求三元组或图谱时追加两件：
 
@@ -90,3 +92,5 @@ agent_created: true
 用户反馈新的问法或常见错误时，把案例追加到 references/style-guide.md 对应章节，不要只写在对话里。
 
 问型矩阵的取值和分布标准集中在 references/qa-schema.md 里维护。实际使用中发现某类问型用户从不问，或者缺了某类高频问型，先改 qa-schema.md 的定义再改生成行为。
+
+难度档位的取值同理，集中在 references/qa-schema.md 里维护。知识库运营方如果对难度分层有新要求，先改定义再改行为。

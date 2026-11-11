@@ -8,6 +8,8 @@
 | question | string | 用户视角的问题，见 style-guide.md 的改写规则 | 数字人民币实名钱包计息吗？ |
 | question_type | string | 问型分类，见下方问型分类定义 | fact |
 | user_profile | string | 提问者画像，见下方画像分类定义 | novice |
+| difficulty_retrieval | string | 检索难度，见下方双轴难度定义 | easy |
+| difficulty_reasoning | string | 推理难度，见下方双轴难度定义 | direct |
 | answer | string | 基于原文的回答，不得引入原文之外的信息 | 计息。自2026年1月1日起…… |
 | source_file | string | 依据的源文件名 | 数字人民币白皮书.pdf |
 | source_location | string | 出处定位：章节号/页码/条款号，尽量精确 | 第二章第3节，第12页 |
@@ -47,6 +49,38 @@
 2. 同一知识点的多条问答对（含同义问法）必须使用不同的 question_type 或不同的 user_profile，禁止只是换个问号的重复
 3. reasoning 类数量占比建议不超过 20%，且每条 reasoning 必须挂靠多条原文（对应多个出处时拆分成多条问答对再综合，需标 needs_review=yes）
 4. 生成报告必须附问型分布统计（question_type 与 user_profile 的计数矩阵），分布不达标时先补齐再交付
+
+## 双轴难度标定（difficulty_retrieval 与 difficulty_reasoning）
+
+灵感来自 GRADE（2025）：单看一条问答对分不出难易，标上两个独立维度的难度后，知识库运营方可以按难度分层抽检，也可以用难度分布衡量题库结构是否合理。两个维度互相独立，一条问答对可以检索简单但推理复杂，也可以反过来。
+
+### difficulty_retrieval 取值（3 档）
+
+衡量从问题找到出处的难易。
+
+| 取值 | 含义 | 判断方法 |
+|---|---|---|
+| easy | 问题用词与原文直接对应，照着问题关键词就能找到出处 | 问题里的词在原文里能直接搜到 |
+| paraphrase | 问题做了口语化或同义改写，与原文用词差异大，需要语义匹配才能定位 | 问题关键词在原文搜不到，要转成术语才能找到 |
+| structural | 答案藏在表格、脚注、附则、附件里，位置不直观 | 出处不在正文段落，而在附件、表格、注释中 |
+
+### difficulty_reasoning 取值（3 档）
+
+衡量从原文得出答案需要动多少脑子。
+
+| 取值 | 含义 | 约束 |
+|---|---|---|
+| direct | 答案直接来自原文单句，照抄或轻微整理 | 默认档位，大多数条目应为此档 |
+| calculation | 需要对原文数值做简单计算（换算、合计、区间判断）才能得出答案 | 答案中的计算结果必须可由 source_quote 原文数值推出，计算过程写入 review_note，needs_review=yes |
+| comparison | 需要比较或综合多个知识点才能回答 | 必须 needs_review=yes，answer 中不得引入原文之外的事实 |
+
+### 标定与分布要求
+
+1. 每条问答对两个难度字段都必须填写，取值不得自造
+2. 每批 10 条及以上，两个难度维度各至少覆盖 2 档。全部条目都是 easy 加 direct，说明题库偏简单，需要在报告中说明原因（例如源文件本身内容简单）
+3. difficulty_retrieval 为 paraphrase 的条目，question 必须真的与原文用词有差异，不能标了档位问题却是原文照搬
+4. calculation 与 comparison 档的条目 100% 进入 needs_review 名单
+5. 生成报告附难度分布统计（两个维度的计数），供知识库运营按难度分层抽检
 
 ## 输出格式
 
