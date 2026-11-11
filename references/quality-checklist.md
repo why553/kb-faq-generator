@@ -4,7 +4,7 @@
 
 ## A. 完整性检查
 
-- [ ] 每条问答对包含 qa-schema.md 要求的全部 12 个字段，无缺失、无空值（review_note 仅在 needs_review=no 时允许为空）
+- [ ] 每条问答对包含 qa-schema.md 要求的全部 13 个字段，无缺失、无空值（review_note 仅在 needs_review=no 时允许为空）
 - [ ] qa_id 编号连续、无重复，格式符合 `QA-{来源序号3位}-{条目序号3位}`
 - [ ] Markdown 表格与 CSV 内容一致
 
@@ -35,9 +35,10 @@
 除问答对文件外，同时输出一份简短生成报告（Markdown）：
 - 源文件清单及各文件生成条数
 - 分类分布统计（category 计数）
+- 问型分布矩阵（question_type 与 user_profile 的交叉计数）
 - needs_review=yes 条目清单及原因摘要
 - 未能转化为问答对的标题清单及原因（对应 style-guide.md 覆盖度要求）
-- 本批质量自检结果（以上 A-D 各项的通过情况）
+- 本批质量自检结果（以上 A-F 各项的通过情况）
 
 ## E. 三元组检查（仅生成三元组时）
 
@@ -46,3 +47,11 @@
 - [ ] 否定语义使用 polarity=negative，未混入 predicate 文本
 - [ ] 同义实体清单已在生成报告中列出，交人工归一
 - [ ] graph.html 可正常在浏览器打开，节点边数与 triples.csv 一致
+
+## F. 问型多样性检查
+
+- [ ] 每条 question_type 和 user_profile 取值均在 qa-schema.md 定义的枚举内，无自造值
+- [ ] 每批 10 条及以上时，question_type 覆盖至少 3 类，user_profile 覆盖至少 2 类
+- [ ] 同一知识点的多条问答对（含同义问法）使用了不同 question_type 或不同 user_profile
+- [ ] reasoning 类条目均标 needs_review=yes，且占比不超过 20%
+- [ ] 生成报告附有 question_type 与 user_profile 的计数矩阵

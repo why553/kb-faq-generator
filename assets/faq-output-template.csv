@@ -1,3 +1,4 @@
-﻿qa_id,question,answer,source_file,source_location,source_quote,category,audience,confidence,needs_review,review_note
-QA-001-001,数字人民币钱包里的钱有利息吗？,计息。自2026年1月1日起实名钱包余额按相应标准计付利息。,数字人民币计息新规公告.pdf,第2条,"自2026年1月1日起，数字人民币实名钱包余额计付利息",计息规则,internal,high,no,
-QA-001-002,数币钱包开立要收费吗？,不收费。个人钱包开立暂不收取任何费用。,数字人民币计息新规公告.pdf,第5条,"个人数字人民币钱包开立暂不收取费用",钱包管理,customer,high,no,
+﻿qa_id,question,question_type,user_profile,answer,source_file,source_location,source_quote,category,audience,confidence,needs_review,review_note
+QA-001-001,数字人民币钱包里的钱有利息吗？,fact,novice,计息。自2026年1月1日起实名钱包余额按相应标准计付利息。,数字人民币计息新规公告.pdf,第2条,"自2026年1月1日起，数字人民币实名钱包余额计付利息",计息规则,internal,high,no,
+QA-001-002,数币钱包开立要收费吗？,fact,novice,不收费。个人钱包开立暂不收取任何费用。,数字人民币计息新规公告.pdf,第5条,"个人数字人民币钱包开立暂不收取费用",钱包管理,customer,high,no,
+QA-001-003,实名钱包计息的依据条款是哪一条？,fact,reviewer,依据公告第2条。,数字人民币计息新规公告.pdf,第2条,"自2026年1月1日起，数字人民币实名钱包余额计付利息",计息规则,internal,high,no,

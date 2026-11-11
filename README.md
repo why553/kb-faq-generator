@@ -9,9 +9,10 @@
 本 skill 把这道工序**固化**下来：
 
 - **强制溯源**：每条答案必须携带逐字原文引用 + 精确到章节/页码的出处，禁止模型补写源文件之外的任何知识
-- **口径一致**：12 字段统一规范（qa_id / question / answer / source_file / source_location / source_quote / category / audience / confidence / needs_review / review_note），任何人任何批次产出同一标准
+- **问型多样性矩阵**：每条问答对标 `question_type`（事实/流程/条件/对比/异常/推理 6 类）× `user_profile`（新手/专家/审核 3 类）两个维度，每批强制覆盖至少 3 种问型、2 种画像，避免模型只会生成"什么是X"式的单调问法（参考 DataMorgana, ACL 2025）
+- **口径一致**：13 字段统一规范（qa_id / question / question_type / user_profile / answer / source_file / source_location / source_quote / category / audience / confidence / needs_review / review_note），任何人任何批次产出同一标准
 - **人工终审**：涉及金额、利率、歧义表述的条目自动标记 `needs_review`，对齐金融场景"AI 辅助、人工终审"的合规底线
-- **核心三件套**：Markdown（评审用）+ CSV（知识库批量导入用）+ 生成报告（分类统计、待复审清单、自检结果）
+- **核心三件套**：Markdown（评审用）+ CSV（知识库批量导入用）+ 生成报告（分类统计、问型分布矩阵、待复审清单、自检结果）
 
 ## 知识图谱增强（可选）
 
@@ -34,11 +35,14 @@
 
 输入一份制度文件，输出：
 
-| qa_id | question | answer | source_file | source_location | source_quote | category | audience | confidence | needs_review | review_note |
-|---|---|---|---|---|---|---|---|---|---|---|
-| QA-001-001 | 数字人民币钱包里的钱有利息吗？ | 计息。自2026年1月1日起实名钱包余额按相应标准计付利息。 | 数字人民币计息新规公告.pdf | 第2条 | "自2026年1月1日起，数字人民币实名钱包余额计付利息" | 计息规则 | internal | high | no | |
+| qa_id | question | question_type | user_profile | answer | source_file | source_location | source_quote | category | audience | confidence | needs_review | review_note |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| QA-001-001 | 数字人民币钱包里的钱有利息吗？ | fact | novice | 计息。自2026年1月1日起实名钱包余额按相应标准计付利息。 | 数字人民币计息新规公告.pdf | 第2条 | "自2026年1月1日起，数字人民币实名钱包余额计付利息" | 计息规则 | internal | high | no | |
+| QA-001-002 | 实名钱包计息的口径依据是什么？ | fact | reviewer | 依据公告第2条。 | 数字人民币计息新规公告.pdf | 第2条 | "自2026年1月1日起，数字人民币实名钱包余额计付利息" | 计息规则 | internal | high | no | |
 
-生成报告同时告知：共生成 N 条、各分类分布、哪些条目待人工复审及原因、哪些标题不适合转问答对。
+同一知识点生成两条问答对时使用不同画像（novice 问结果，reviewer 问依据），这就是问型矩阵的作用。
+
+生成报告同时告知：共生成 N 条、各分类分布、问型分布矩阵（question_type × user_profile 交叉计数）、哪些条目待人工复审及原因、哪些标题不适合转问答对。
 
 ## 安装
 
@@ -56,8 +60,8 @@
 Skill 会按四步工作流执行：
 
 1. **读取盘点** —— 建立知识点清单，与用户确认生成规模
-2. **生成问答对** —— 按 `references/qa-schema.md` 字段规范 + `references/style-guide.md` 问法风格
-3. **质量自检** —— 按 `references/quality-checklist.md` 的完整性/溯源/质量/安全四类检查（含三元组 E 类检查）
+2. **生成问答对** —— 按 `references/qa-schema.md` 字段规范（含问型矩阵）+ `references/style-guide.md` 问法风格
+3. **质量自检** —— 按 `references/quality-checklist.md` 的完整性/溯源/质量/安全/问型五类检查（含三元组 E 类检查）
 4. **交付** —— Markdown 表格 + CSV 入库文件 + 生成报告；要求图谱时另附 triples.csv + graph.html（系统浏览器打开）
 
 单独转换图谱也可以：
@@ -72,9 +76,9 @@ python scripts/build_graph.py your-triples.csv -o graph.html
 kb-faq-generator/
 ├── SKILL.md                    # 技能本体：工作流、溯源铁律、边界
 ├── references/
-│   ├── qa-schema.md            # 问答对 12 字段规范与禁止事项
-│   ├── style-guide.md          # "条文语言 → 办事语言"问法转换规则
-│   ├── quality-checklist.md    # 交付前 A-D + E(三元组) 自检清单
+│   ├── qa-schema.md            # 问答对 13 字段规范 + 问型多样性矩阵 + 禁止事项
+│   ├── style-guide.md          # "条文语言 → 办事语言"问法转换规则 + 矩阵写作指引
+│   ├── quality-checklist.md    # 交付前 A-D + E(三元组) + F(问型) 自检清单
 │   └── triples-schema.md       # 知识三元组字段规范与抽取规则
 ├── scripts/
 │   └── build_graph.py          # triples.csv → 交互式 graph.html 转换器
