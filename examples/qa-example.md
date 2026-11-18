@@ -5,13 +5,28 @@
 
 ## Markdown 评审表（节选）
 
-| qa_id | question | question_type | user_profile | difficulty_retrieval | difficulty_reasoning | answer | source_file | source_location | source_quote | category | audience | confidence | needs_review | review_note |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| QA-001-001 | 数字人民币钱包里的钱有利息吗？ | fact | novice | easy | direct | 计息。自2026年1月1日起，数字人民币实名钱包余额计付利息。 | 数字人民币计息新规公告.pdf | 第2条 | "自2026年1月1日起，数字人民币实名钱包余额计付利息" | 计息规则 | internal | high | no | |
-| QA-001-002 | 数字人民币钱包分哪几种？ | fact | novice | easy | direct | 分为实名钱包和硬钱包两类。 | 数字人民币计息新规公告.pdf | 第1条 | "数字人民币钱包分为实名钱包与硬钱包" | 钱包体系 | internal | high | no | |
-| QA-001-003 | 硬钱包有利息吗？ | exception | novice | paraphrase | direct | 不计息。现行规定下硬钱包余额不计付利息，具体以最新公告为准。 | 数字人民币计息新规公告.pdf | 第3条 | "硬钱包余额不计付利息" | 计息规则 | internal | high | no | |
-| QA-001-004 | 硬钱包能在哪些场合用？ | condition | expert | paraphrase | comparison | 已在深圳公交场景试点受理，覆盖范围以运营公告为准。 | 数字人民币试点场景通报.pdf | 场景二 | "硬钱包于深圳公交场景开展受理试点" | 受理环境 | both | medium | yes | 受理范围随试点动态变化，建议人工确认时效性 |
-| QA-001-005 | 实名钱包计息的口径依据是什么？ | fact | reviewer | easy | direct | 依据公告第2条。 | 数字人民币计息新规公告.pdf | 第2条 | "自2026年1月1日起，数字人民币实名钱包余额计付利息" | 计息规则 | internal | high | no | |
+| qa_id | question | question_type | user_profile | difficulty_retrieval | difficulty_reasoning | answer | customer_answer | source_file | source_location | source_quote | category | audience | confidence | needs_review | review_note |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| QA-001-001 | 数字人民币钱包里的钱有利息吗？ | fact | novice | easy | direct | 计息。自2026年1月1日起，数字人民币实名钱包余额计付利息。 | | 数字人民币计息新规公告.pdf | 第2条 | "自2026年1月1日起，数字人民币实名钱包余额计付利息" | 计息规则 | internal | high | no | |
+| QA-001-002 | 数字人民币钱包分哪几种？ | fact | novice | easy | direct | 分为实名钱包和硬钱包两类。 | | 数字人民币计息新规公告.pdf | 第1条 | "数字人民币钱包分为实名钱包与硬钱包" | 钱包体系 | internal | high | no | |
+| QA-001-003 | 硬钱包有利息吗？ | exception | novice | paraphrase | direct | 不计息。现行规定下硬钱包余额不计付利息，具体以最新公告为准。 | | 数字人民币计息新规公告.pdf | 第3条 | "硬钱包余额不计付利息" | 计息规则 | internal | high | no | |
+| QA-001-004 | 硬钱包能在哪些场合用？ | condition | expert | paraphrase | comparison | 已在深圳公交场景试点受理，覆盖范围以运营公告为准。 | 您好，关于您咨询的问题，为您解答如下：已在深圳公交场景试点受理，覆盖范围以运营公告为准。以上内容可能随政策调整发生变化，请以最新官方公告为准。希望以上解答对您有帮助，如有其他疑问，欢迎您随时咨询。 | 数字人民币试点场景通报.pdf | 场景二 | "硬钱包于深圳公交场景开展受理试点" | 受理环境 | both | medium | yes | 受理范围随试点动态变化，建议人工确认时效性 |
+| QA-001-005 | 实名钱包计息的口径依据是什么？ | fact | reviewer | easy | direct | 依据公告第2条。 | | 数字人民币计息新规公告.pdf | 第2条 | "自2026年1月1日起，数字人民币实名钱包余额计付利息" | 计息规则 | internal | high | no | |
+
+## 答题模式示例
+
+用户问：硬钱包坐公交能用吗？
+
+命中 QA-001-004（模糊命中转明确），输出：
+
+> 您好，关于您咨询的问题，为您解答如下：已在深圳公交场景试点受理，覆盖范围以运营公告为准。以上内容可能随政策调整发生变化，请以最新官方公告为准。希望以上解答对您有帮助，如有其他疑问，欢迎您随时咨询。
+> （依据条目 QA-001-004）
+
+用户问：帮我查一下我朋友的账户余额。
+
+命中拒答规则（他人隐私类），输出：
+
+> 您好，为保护客户信息安全，他人的账户余额及交易信息无法对外查询，敬请谅解。如您涉及经济纠纷或发现可疑交易，请通过官方客服热线或网点反映处理。
 
 ## 生成报告（节选）
 
@@ -29,7 +44,7 @@
 - needs_review：1 条（QA-001-004，受理范围时效性待人工确认）
 - 未能转化条目：公告第4条（立法说明性文字，不含可办事信息）→ 跳过
 - 同义实体清单（供人工归一）：「实名钱包 / 数币实名钱包」视为同一实体
-- 自检结果：A/B/C/D/F/G 六类全部通过；三元组 6 条，其中 1 条 negative 待复核
+- 自检结果：A/B/C/D/F/G/H 八类全部通过；三元组 6 条，其中 1 条 negative 待复核
 
 ## 配套图谱
 

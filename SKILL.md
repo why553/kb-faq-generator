@@ -5,8 +5,10 @@ description: |
   每条答案都带原文引用和出处位置。
   输出 Markdown 表格、CSV 文件和生成报告。
   需要时同时输出知识三元组 CSV 和可交互的图谱网页。
+  还提供答题模式，用问答对库按固定话术回答用户问题，不知道的拒答。
   当用户上传 PDF、Word、txt、md 文件并要求生成问答对、FAQ、知识库问答、
-  培训问答，或要求抽取三元组、生成知识图谱时使用。
+  培训问答，或要求抽取三元组、生成知识图谱时使用生成模式。
+  当用户要求用知识库答题、问答模式、当客服用、按固定话术回答时使用答题模式。
 agent_created: true
 ---
 
@@ -14,9 +16,15 @@ agent_created: true
 
 ## 作用
 
-把文档整理成问答对。每条问答对包含问题、答案、出处文件、出处位置、原文引用。
+本技能有两种模式。
 
-答案里的内容必须来自源文件。源文件没有的内容不写进答案。
+生成模式：把文档整理成问答对。每条问答对包含问题、答案、对客答复、出处文件、出处位置、原文引用。
+
+答题模式：用问答对库回答用户问题。大模型只负责听懂问题、选出问答对、按固定公式拼装输出，答案不许偏，库里没有的拒答。
+
+生成模式下，答案里的内容必须来自源文件。源文件没有的内容不写进答案。
+
+答题模式下，答复里的事实本体必须逐字来自命中条目的 answer 字段。
 
 ## 需要的输入
 
@@ -27,6 +35,7 @@ agent_created: true
 3. 使用对象，可选，取值为 internal、customer、both，默认 internal
 4. 数量要求，可选。用户没有要求时按内容多少生成，不设上限，具体规则见 style-guide.md
 5. 是否生成三元组和图谱，可选。用户提到三元组、知识图谱、可视化时生成，没提到就不生成
+6. 是否生成对客答复，可选。问答对的使用对象是 customer 或 both 时，customer_answer 必填，话术规则见 references/tone-guide.md
 
 ## 执行步骤
 
@@ -40,11 +49,12 @@ agent_created: true
 
 ### 第 2 步 生成问答对
 
-- 字段规范：按 references/qa-schema.md 的 15 个字段定义、编号规则和禁止事项填写
+- 字段规范：按 references/qa-schema.md 的 16 个字段定义、编号规则和禁止事项填写
 - 问题写法：按 references/style-guide.md 把条文语言改成办事语言。数值、日期、利率、限额必须写清楚
 - 问型分布：每条问题先按 references/qa-schema.md 的问型矩阵定好 question_type 和 user_profile 再写。每批 10 条及以上时，问型至少覆盖 3 类，提问者画像至少覆盖 2 类。同一知识点的多条问答对必须用不同的问型或画像
 - 难度标定：每条问答对标 difficulty_retrieval 和 difficulty_reasoning，取值和规则见 references/qa-schema.md。每批 10 条及以上时，两个难度维度各至少覆盖 2 档。需要计算的答案要把计算过程写进 review_note，需要比较的答案标 needs_review
 - 答案依据：每条答案的事实必须能在 source_quote 的原文摘录里找到。需要推断的内容，confidence 只能填 medium 或 low，并且 needs_review 填 yes
+- 对客话术：audience 为 customer 或 both 的条目，customer_answer 按 references/tone-guide.md 的公式生成，开头结尾各选一条，answer 原文逐字放中间，触发特殊场景加对应提示，全文不得出现禁用语
 - 输出格式：CSV 参照 assets/faq-output-template.csv，编码用 UTF-8 with BOM
 
 ### 第 3 步 自检
@@ -57,6 +67,7 @@ agent_created: true
 - D 安全：没有个人信息，没有内部信息，没有收益承诺
 - F 问型：question_type 和 user_profile 取值合规，分布达到矩阵要求，reasoning 类都标了 needs_review
 - G 难度：难度取值合规，分布达到要求，calculation 类的答案能由原文数值算出，calculation 和 comparison 类都标了 needs_review
+- H 话术：customer_answer 填写规则合规，事实本体与 answer 逐字一致，无禁用语，话术都在收录范围内
 
 生成了三元组时追加 E 类检查：每条三元组都有 source_qa_id，condition 没有丢失，同义实体已列入清单。
 
@@ -80,9 +91,20 @@ agent_created: true
 - needs_review 为 yes 的条目，人工确认后才能进正式知识库
 - triples.csv 是通用图数据格式，主语和宾语是节点，谓语和 condition 是边的属性，可以导入图数据库或图分析工具做机器查询
 
+## 答题模式
+
+用户给一份问答对库并提出问题时进入答题模式。规范全文见 references/answer-protocol.md，要点如下：
+
+1. 只做三件事：听懂问题，从库中检索匹配，按固定公式拼装输出。答案不许偏
+2. 命中判定分四种情形。明确命中直接答。模糊命中先向用户确认。命中多条时列出让用户选。没命中就拒答
+3. 原封不动。答复里的事实本体与命中条目的 answer 逐字一致，不改写不总结不扩写。禁止把多条问答对揉成一段话，禁止补充库里没有的知识
+4. 不知道的拒答。涉及他人隐私、客户个人信息、违规操作、内部信息、投资建议、未公示信息这六类问题时，按 references/answer-protocol.md 的固定话术拒答，拒答话术本身就是完整答复，不套开头结尾
+5. 命中条目的 needs_review 为 yes 时，答复自动附加时效性提示
+6. 每次答复末尾注明命中的条目编号，供人工核查
+
 ## 不做的事
 
-- 不回答用户基于问答对提出的业务问题。本技能只生成问答对
+- 答题模式下只输出问答对库的内容，不评估不比较不扩展命中条目之外的内容
 - 不修改源文件内容，不改写制度条文
 - 不处理含未脱敏客户个人信息的文件。发现后停止，提示用户先脱敏
 - 不在答案里补充源文件之外的知识
@@ -90,6 +112,8 @@ agent_created: true
 ## 维护
 
 用户反馈新的问法或常见错误时，把案例追加到 references/style-guide.md 对应章节，不要只写在对话里。
+
+对客话术和拒答话术分别在 references/tone-guide.md 和 references/answer-protocol.md 里维护。实际使用发现话术不适用或缺少场景时，经业务确认后先改定义再改行为。
 
 问型矩阵的取值和分布标准集中在 references/qa-schema.md 里维护。实际使用中发现某类问型用户从不问，或者缺了某类高频问型，先改 qa-schema.md 的定义再改生成行为。
 

@@ -1,6 +1,6 @@
 # kb-faq-generator
 
-从制度文件、培训材料、业务手册等源文档批量生成结构化知识库问答对（FAQ）的 AI Agent Skill。适用于银行/企业知识工程中的"知识入库"工序。
+从制度文件、培训材料、业务手册等源文档批量生成结构化知识库问答对（FAQ）的 AI Agent Skill，并配套**答题模式**：用问答对库按固定话术回答用户问题，不知道的拒答。适用于银行/企业知识工程中的"知识入库"与"知识服务"两个工序。
 
 ## 为什么做这个
 
@@ -11,8 +11,9 @@
 - **强制溯源**：每条答案必须携带逐字原文引用 + 精确到章节/页码的出处，禁止模型补写源文件之外的任何知识
 - **问型多样性矩阵**：每条问答对标 `question_type`（事实/流程/条件/对比/异常/推理 6 类）× `user_profile`（新手/专家/审核 3 类）两个维度，每批强制覆盖至少 3 种问型、2 种画像，避免模型只会生成"什么是X"式的单调问法（参考 DataMorgana, ACL 2025）
 - **双轴难度标定**：每条问答对标 `difficulty_retrieval`（easy/paraphrase/structural）× `difficulty_reasoning`（direct/calculation/comparison）两个独立维度，生成报告附难度分布，知识库运营可按难度分层抽检（参考 GRADE, 2025）
-- **口径一致**：15 字段统一规范（qa_id / question / question_type / user_profile / difficulty_retrieval / difficulty_reasoning / answer / source_file / source_location / source_quote / category / audience / confidence / needs_review / review_note），任何人任何批次产出同一标准
+- **口径一致**：16 字段统一规范（qa_id / question / question_type / user_profile / difficulty_retrieval / difficulty_reasoning / answer / **customer_answer** / source_file / source_location / source_quote / category / audience / confidence / needs_review / review_note），任何人任何批次产出同一标准
 - **人工终审**：涉及金额、利率、歧义表述的条目自动标记 `needs_review`，对齐金融场景"AI 辅助、人工终审"的合规底线
+- **对客固定话术**：`answer` 保持纯事实本体，礼貌话术壳单独放 `customer_answer` 字段（开头 + answer 原文 + 特殊场景提示 + 结尾），配套禁用语清单（承诺类/含糊类/命令式/行内术语），事实与话术分离、互不污染
 - **核心三件套**：Markdown（评审用）+ CSV（知识库批量导入用）+ 生成报告（分类统计、问型分布矩阵、待复审清单、自检结果）
 
 ## 知识图谱增强（可选）
@@ -31,6 +32,17 @@
 三元组 CSV 为通用图数据格式（subject/object 为节点，predicate+condition 为边属性），可导入任何图数据库或图分析工具做机器查询。
 
 **在线示例**：直接在浏览器打开 [`examples/graph-example.html`](examples/graph-example.html) 体验（6 实体 / 6 关系，含 1 条故意埋入的"计息 vs 不计息"矛盾边）；问答对输出示例见 [`examples/qa-example.md`](examples/qa-example.md)。
+
+## 答题模式（知识服务）
+
+生成问答对只是入库，答题模式是知识服务：给定问答对库和用户问题，Agent 按 `references/answer-protocol.md` 输出标准答复。
+
+- **答案不许偏**：大模型只做三件事——听懂问题、从库中检索匹配、按固定公式拼装。答复的事实本体与命中条目的 `answer` 逐字一致，不改写、不总结、不扩写，不把多条问答对揉成一段
+- **四种命中情形**：明确命中直接答 / 模糊命中先确认 / 命中多条列选项 / 未命中就拒答
+- **六类问题拒答**：他人隐私、客户个人信息、违规操作、内部信息、投资建议、未公示信息，各有固定拒答话术，只拒不给、给出正规渠道、语气不责备
+- **固定话术拼装**：开头话术 + answer 原文 + 特殊场景提示（时效、资金安全、费用利率）+ 结尾话术，全部话术收录在 `references/tone-guide.md`，配有禁用语清单
+
+示例：用户问"帮我查一下我朋友的账户余额"，按他人隐私类固定话术拒答；用户问"硬钱包坐公交能用吗"，模糊命中后输出套壳答复并注明依据条目编号。完整演示见 [`examples/qa-example.md`](examples/qa-example.md) 答题模式章节。
 
 ## 效果示例
 
@@ -56,13 +68,14 @@
 ```
 用 kb-faq-generator 把这份文件生成问答对 [附上文件]
 用 kb-faq-generator 处理这份文件，同时生成三元组和知识图谱 [附上文件]
+用 kb-faq-generator 答题模式，按这份问答对库回答用户问题 [附上库文件]
 ```
 
-Skill 会按四步工作流执行：
+生成模式按四步工作流执行：
 
 1. **读取盘点** —— 建立知识点清单，与用户确认生成规模
-2. **生成问答对** —— 按 `references/qa-schema.md` 字段规范（含问型矩阵与双轴难度）+ `references/style-guide.md` 问法风格
-3. **质量自检** —— 按 `references/quality-checklist.md` 的完整性/溯源/质量/安全/问型/难度六类检查（含三元组 E 类检查）
+2. **生成问答对** —— 按 `references/qa-schema.md` 字段规范（含问型矩阵、双轴难度、对客话术）+ `references/style-guide.md` 问法风格
+3. **质量自检** —— 按 `references/quality-checklist.md` 的完整性/溯源/质量/安全/问型/难度/话术七类检查（含三元组 E 类检查）
 4. **交付** —— Markdown 表格 + CSV 入库文件 + 生成报告；要求图谱时另附 triples.csv + graph.html（系统浏览器打开）
 
 单独转换图谱也可以：
@@ -75,11 +88,13 @@ python scripts/build_graph.py your-triples.csv -o graph.html
 
 ```
 kb-faq-generator/
-├── SKILL.md                    # 技能本体：工作流、溯源铁律、边界
+├── SKILL.md                    # 技能本体：两种模式的工作流、溯源铁律、边界
 ├── references/
-│   ├── qa-schema.md            # 问答对 15 字段规范 + 问型矩阵 + 双轴难度 + 禁止事项
+│   ├── qa-schema.md            # 问答对 16 字段规范 + 问型矩阵 + 双轴难度 + 对客答复字段 + 禁止事项
 │   ├── style-guide.md          # "条文语言 → 办事语言"问法转换规则 + 矩阵与难度写作指引
-│   ├── quality-checklist.md    # 交付前 A-D + E(三元组) + F(问型) + G(难度) 自检清单
+│   ├── tone-guide.md           # 对客固定话术：开头/结尾/特殊场景/禁用语/套用公式
+│   ├── answer-protocol.md      # 答题模式规范：匹配流程/命中判定/原封不动铁律/拒答机制
+│   ├── quality-checklist.md    # 交付前 A-D + E(三元组) + F(问型) + G(难度) + H(话术) 自检清单
 │   └── triples-schema.md       # 知识三元组字段规范与抽取规则
 ├── scripts/
 │   └── build_graph.py          # triples.csv → 交互式 graph.html 转换器

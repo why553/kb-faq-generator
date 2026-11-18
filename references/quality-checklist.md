@@ -4,7 +4,7 @@
 
 ## A. 完整性检查
 
-- [ ] 每条问答对包含 qa-schema.md 要求的全部 15 个字段，无缺失、无空值（review_note 仅在 needs_review=no 时允许为空）
+- [ ] 每条问答对包含 qa-schema.md 要求的全部 16 个字段，无缺失、无空值（review_note 仅在 needs_review=no 时允许为空；customer_answer 仅在 audience=internal 时允许为空）
 - [ ] qa_id 编号连续、无重复，格式符合 `QA-{来源序号3位}-{条目序号3位}`
 - [ ] Markdown 表格与 CSV 内容一致
 
@@ -39,7 +39,7 @@
 - 难度分布统计（difficulty_retrieval 与 difficulty_reasoning 各档计数）
 - needs_review=yes 条目清单及原因摘要
 - 未能转化为问答对的标题清单及原因（对应 style-guide.md 覆盖度要求）
-- 本批质量自检结果（以上 A-G 各项的通过情况）
+- 本批质量自检结果（以上 A-H 各项的通过情况）
 
 ## E. 三元组检查（仅生成三元组时）
 
@@ -66,3 +66,12 @@
 - [ ] difficulty_reasoning=calculation 的条目，计算过程写在 review_note 中，计算结果可由原文数值推出
 - [ ] difficulty_reasoning 为 calculation 或 comparison 的条目 100% 标了 needs_review=yes
 - [ ] 生成报告附有难度分布统计
+
+## H. 对客话术检查
+
+- [ ] audience 为 customer 或 both 的条目，customer_answer 均已填写；audience 为 internal 的条目 customer_answer 均为空
+- [ ] customer_answer 按 tone-guide.md 公式生成：开头话术 + answer 原文 + 触发的特殊场景提示 + 结尾话术，开头结尾各只有一条
+- [ ] customer_answer 中的事实本体与 answer 逐字一致，无改写、无缩写、无语序调整
+- [ ] needs_review=yes 的条目，customer_answer 已附加时效性提示话术
+- [ ] customer_answer 全文无 tone-guide.md 第四节禁用语（承诺类、含糊类、命令式、行内术语）
+- [ ] 话术选用均在 tone-guide.md 收录范围内，无自造话术

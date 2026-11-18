@@ -11,6 +11,7 @@
 | difficulty_retrieval | string | 检索难度，见下方双轴难度定义 | easy |
 | difficulty_reasoning | string | 推理难度，见下方双轴难度定义 | direct |
 | answer | string | 基于原文的回答，不得引入原文之外的信息 | 计息。自2026年1月1日起…… |
+| customer_answer | string | 对客答复文本，按 tone-guide.md 话术套用规则生成。audience 为 internal 时留空，为 customer 或 both 时必填 | 您好，关于您咨询的问题，为您解答如下：自2026年1月1日起…… |
 | source_file | string | 依据的源文件名 | 数字人民币白皮书.pdf |
 | source_location | string | 出处定位：章节号/页码/条款号，尽量精确 | 第二章第3节，第12页 |
 | source_quote | string | 支撑答案的原文片段（原文摘录，不得改写），不超过100字 | "实名钱包余额自2026年1月1日起按……计付利息" |
@@ -81,6 +82,20 @@
 3. difficulty_retrieval 为 paraphrase 的条目，question 必须真的与原文用词有差异，不能标了档位问题却是原文照搬
 4. calculation 与 comparison 档的条目 100% 进入 needs_review 名单
 5. 生成报告附难度分布统计（两个维度的计数），供知识库运营按难度分层抽检
+
+## 对客答复字段（customer_answer）
+
+answer 保持纯事实本体，供机器核对与溯源。礼貌话术壳放 customer_answer 字段，事实与话术分离，评审时两不相扰。
+
+### 生成规则
+
+1. audience 为 internal 的条目，customer_answer 留空
+2. audience 为 customer 或 both 的条目，customer_answer 必填
+3. 组成公式固定：开头话术 + answer 原文 + 特殊场景提示（触发时）+ 结尾话术。开头结尾各从 tone-guide.md 选一条，answer 原文逐字保留，不得改写、缩写或调整语序
+4. needs_review=yes 的条目必须附加时效性提示话术
+5. 涉及费用利率、资金安全的条目按 tone-guide.md 第三节触发对应提示
+6. 全文不得出现 tone-guide.md 第四节禁用语
+7. 答题模式使用问答对库时，按 answer-protocol.md 输出，事实本体同样逐字不动
 
 ## 输出格式
 
