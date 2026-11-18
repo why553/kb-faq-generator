@@ -110,3 +110,7 @@ answer 保持纯事实本体，供机器核对与溯源。礼貌话术壳放 cus
 - 禁止在 answer 中添加原文没有的数字、日期、金额
 - 禁止合并多个 source_location 到一条问答对（一条问答对一个精确出处；综合型问题拆成多条）
 - 禁止生成 needs_review=yes 但 review_note 为空的条目
+
+## 下游消费
+
+问答对可交由 bank-call-guard 技能消费，用于对客应答。转换规则见 bank-call-guard 的 references/faq-mapping.md：question 与 answer 分别映射为话术库的触发词与事实本体，needs_review 为 yes 的条目不进入正式话术库。生成面向 bank-call-guard 的问答对时，answer 末尾必须包含下一步指引，保证转入话术库后 next_step 列有内容。
