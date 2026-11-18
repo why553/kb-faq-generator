@@ -92,6 +92,7 @@ answer 保持纯事实本体，供机器核对与溯源。礼貌话术壳放 cus
 1. audience 为 internal 的条目，customer_answer 留空
 2. audience 为 customer 或 both 的条目，customer_answer 必填
 3. 组成公式固定：开头话术 + answer 原文 + 特殊场景提示（触发时）+ 结尾话术。开头结尾各从 tone-guide.md 选一条，answer 原文逐字保留，不得改写、缩写或调整语序
+4. 涉及办理、查询等需要客户行动的条目，answer 末尾必须包含下一步指引，写明客户接下来做什么、去哪办、带什么材料。纯知识解释类条目（如计息规则）可不含指引。指引使用通用表述（就近网点、掌上银行、客服热线），不写具体网点名或内部系统代号
 4. needs_review=yes 的条目必须附加时效性提示话术
 5. 涉及费用利率、资金安全的条目按 tone-guide.md 第三节触发对应提示
 6. 全文不得出现 tone-guide.md 第四节禁用语
